@@ -28,6 +28,7 @@ async function run() {
 
     const db = client.db('solo-job')
     const jobsCollection = db.collection('jobs')
+    const bidsCollection = db.collection('bids')
 
     // save a jobData in db
     app.post('/add-job', async (req, res) => {
@@ -78,6 +79,30 @@ async function run() {
       const result = await jobsCollection.updateOne(query, update, options)
       res.send(result)
     })
+
+    // bids related apis
+
+    // save a bidData in db
+    app.post('/add-bid', async (req, res) => {
+      const bidData = req.body;
+
+      // 0. if a user placed a bid already in this job
+      const query = { email: bidData.email, jobId: bidData.jobId }
+      const alreadyExist = await bidsCollection.findOne(query);
+      if (alreadyExist) return res.status(400).send('You have already placed a bid on this job!')
+
+      // 1. Save data in bids collection
+      const result = await bidsCollection.insertOne(bidData);
+
+      // 2. Increase bid count in jobs collection
+      const filter = { _id: new ObjectId(bidData.jobId) }
+      const update = {
+        $inc: { bid_count: 1 }
+      }
+      const updateBidCount = await jobsCollection.updateOne(filter, update)
+      res.send(result);
+    })
+
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 })
     console.log(

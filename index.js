@@ -58,6 +58,26 @@ async function run() {
       res.send(result);
     })
 
+    // get a single job data by id from db
+    app.get('/job/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await jobsCollection.findOne(query)
+      res.send(result);
+    })
+
+    // update jobData from db
+    app.put('/update-job/:id', async (req, res) => {
+      const id = req.params.id;
+      const jobData = req.body;
+      const update = {
+        $set: jobData,
+      }
+      const query = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const result = await jobsCollection.updateOne(query, update, options)
+      res.send(result)
+    })
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 })
     console.log(

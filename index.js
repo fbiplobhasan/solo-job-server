@@ -133,8 +133,14 @@ async function run() {
     // get all jobs
     app.get('/all-jobs', async (req, res) => {
       const filter = req.query.filter;
-      let query = {};
-      if(filter) query.category = filter;
+      const search = req.query.search;
+      let query = {
+        title: {
+          $regex: search,
+          $options: 'i',
+        }
+      };
+      if (filter) query.category = filter;
       const result = await jobsCollection.find(query).toArray();
       res.send(result);
     })

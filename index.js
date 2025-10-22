@@ -5,6 +5,7 @@ require('dotenv').config()
 const jwt = require('jsonwebtoken')
 const port = process.env.PORT || 9000
 const app = express()
+const cookieParser = require('cookie-parser')
 
 const corsOptions = {
   origin: ['http://localhost:5173'],
@@ -14,6 +15,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 app.use(express.json())
+app.use(cookieParser())
 
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@main.yolij.mongodb.net/?retryWrites=true&w=majority&appName=Main`
 
@@ -89,8 +91,12 @@ async function run() {
     })
 
     // get all jobs posted by a specific user
-    app.get('/jobs/:email', async (req, res) => {
+    app.get('/jobs/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
+      const decodedEmail = req?.user?.email;
+
+      if (decodedEmail !== email) return res.status(401).send({ message: 'unauthorized access' })
+
       const query = { 'buyer.email': email }
       const result = await jobsCollection.find(query).toArray()
       res.send(result)
@@ -149,9 +155,13 @@ async function run() {
     })
 
     // get all bids for a specific user
-    app.get('/bids/:email', async (req, res) => {
+    app.get('/bids/:email', verifyToken, async (req, res) => {
       const isBuyer = req.query.buyer;
+
       const email = req.params.email;
+      const decodedEmail = req?.user?.email
+      if (decodedEmail !== email) return res.status(401).send({ message: 'unauthorized access' })
+        
       let query = {};
       if (isBuyer) {
         query.buyer = email

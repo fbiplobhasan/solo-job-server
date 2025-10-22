@@ -161,7 +161,7 @@ async function run() {
       const email = req.params.email;
       const decodedEmail = req?.user?.email
       if (decodedEmail !== email) return res.status(401).send({ message: 'unauthorized access' })
-        
+
       let query = {};
       if (isBuyer) {
         query.buyer = email
